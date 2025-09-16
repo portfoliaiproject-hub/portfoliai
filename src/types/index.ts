@@ -12,7 +12,7 @@ export interface Message {
   id: string
   role: "ai" | "user"
   content?: string
-  type?: "text" | "company_card" | "comparison_card" | "portfolio_summary" | "risk_assessment"
+  type?: "text" | "company_card" | "comparison_card" | "portfolio_summary" | "risk_assessment" | "market_movers_card" | "financial_health_card" | "news_card"
   data?: any
   timestamp?: Date
 }
@@ -43,7 +43,22 @@ export interface Company {
   valuationMetrics: ValuationMetrics
   fit: string
   industry?: string
+  sector?: string
   marketCap?: number
+  stockData?: StockData
+}
+
+export interface StockData {
+  currentPrice: number
+  change: number
+  changePercent: number
+  marketCap: number
+  peRatio: number
+  dividendYield: number
+  volume: number
+  avgVolume: number
+  dayRange: { low: number; high: number }
+  yearRange: { low: number; high: number }
 }
 
 export interface ValuationMetrics {
@@ -71,6 +86,60 @@ export interface ComparisonData {
   companyB: CompanyComparison
   valuationData: Array<{ metric: string; [key: string]: string | number }>
   verdict?: string
+}
+
+// Market Movers types
+export interface MarketMover {
+  ticker: string
+  name: string
+  currentPrice: number
+  change: number
+  changePercent: number
+  volume: number
+  avgVolume: number
+}
+
+export interface MarketMoversData {
+  gainers: MarketMover[]
+  losers: MarketMover[]
+  date?: string
+}
+
+// Financial Health types
+export interface FinancialMetric {
+  name: string
+  value: number
+  unit: string
+  benchmark: number
+  isHigherBetter: boolean
+  description: string
+}
+
+export interface FinancialHealthData {
+  ticker: string
+  name: string
+  metrics: FinancialMetric[]
+  overallScore: number
+  lastUpdated: string
+}
+
+// News types
+export interface NewsItem {
+  id: string
+  title: string
+  summary: string
+  source: string
+  publishedAt: string
+  url: string
+  sentiment: 'positive' | 'negative' | 'neutral'
+  impact?: 'high' | 'medium' | 'low'
+}
+
+export interface NewsData {
+  ticker: string
+  name: string
+  news: NewsItem[]
+  lastUpdated: string
 }
 
 // Portfolio types

@@ -7,11 +7,13 @@ import { PortfolioOverview } from "@/components/portfolio/portfolio-overview"
 import { AllocationSection } from "@/components/portfolio/allocation-section"
 import { HoldingsTable } from "@/components/portfolio/holdings-table"
 import { ActivityFull } from "@/components/portfolio/activity-full"
+import { CompanyNewsSection, useSelectedHolding } from "@/components/portfolio/company-news-section"
 import OnTrackCard from "@/components/OnTrackCard"
 
 export default function PortfolioPage() {
   const { user, loading: authLoading } = useAuth("/")
   const { portfolio } = usePortfolio()
+  const { selectedHolding, selectHolding, clearSelection } = useSelectedHolding()
 
   // Loading state
   if (authLoading) {
@@ -55,7 +57,15 @@ export default function PortfolioPage() {
         {/* Holdings Table */}
         <HoldingsTable 
           holdings={portfolio.holdings} 
-          onAddHolding={handleAddHolding} 
+          onAddHolding={handleAddHolding}
+          onSelectHolding={selectHolding}
+          selectedHolding={selectedHolding}
+        />
+
+        {/* Company News Section */}
+        <CompanyNewsSection 
+          selectedHolding={selectedHolding}
+          onClose={clearSelection}
         />
 
         {/* Recent Activity */}

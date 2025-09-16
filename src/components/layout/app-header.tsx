@@ -62,8 +62,8 @@ export function AppHeader({ user, onMenuClick }: AppHeaderProps) {
           Portfolio
         </Link>
         <Link 
-          href="/settings" 
-          className={`hover:text-gray-900 transition-colors ${isActive('/settings') ? 'text-indigo-600 font-medium' : ''}`}
+          href="/dashboard/settings" 
+          className={`hover:text-gray-900 transition-colors ${isActive('/dashboard/settings') ? 'text-indigo-600 font-medium' : ''}`}
         >
           Settings
         </Link>
@@ -89,7 +89,7 @@ export function AppHeader({ user, onMenuClick }: AppHeaderProps) {
                 {user?.email}
               </div>
               <Link 
-                href="/settings" 
+                href="/dashboard/settings" 
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 onClick={() => setUserMenuOpen(false)}
               >

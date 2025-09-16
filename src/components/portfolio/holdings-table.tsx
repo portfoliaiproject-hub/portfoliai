@@ -21,6 +21,8 @@ interface Holding {
 interface HoldingsTableProps {
   holdings?: Holding[]
   onAddHolding?: () => void
+  onSelectHolding?: (holding: Holding) => void
+  selectedHolding?: Holding | null
 }
 
 const defaultHoldings: Holding[] = [
@@ -143,7 +145,7 @@ function formatUSD(amount: number): string {
   })
 }
 
-export function HoldingsTable({ holdings = [], onAddHolding }: HoldingsTableProps) {
+export function HoldingsTable({ holdings = [], onAddHolding, onSelectHolding, selectedHolding }: HoldingsTableProps) {
   const [query, setQuery] = useState("")
   const [filterMode, setFilterMode] = useState<"all" | "assetClass" | "sector" | "strategy">("all")
   const [filterValue, setFilterValue] = useState("")
@@ -304,7 +306,15 @@ export function HoldingsTable({ holdings = [], onAddHolding }: HoldingsTableProp
           </thead>
           <tbody>
             {processedData.map((holding) => (
-              <tr key={holding.ticker} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <tr 
+                key={holding.ticker} 
+                className={`border-b border-gray-100 transition-colors cursor-pointer ${
+                  selectedHolding?.ticker === holding.ticker 
+                    ? 'bg-indigo-50 border-indigo-200' 
+                    : 'hover:bg-gray-50'
+                }`}
+                onClick={() => onSelectHolding?.(holding)}
+              >
                 <td className="py-4 pr-4 font-medium text-gray-800">{holding.asset}</td>
                 <td className="py-4 pr-4 text-gray-600 font-mono text-xs bg-gray-100 rounded px-2 py-1 inline-block">
                   {holding.ticker}
