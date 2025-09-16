@@ -5,7 +5,10 @@ import { ChatBubble } from "./chat-bubble"
 import { ChatInput } from "./chat-input"
 import { CompanyCard } from "@/components/investment/company-card"
 import { ComparisonCard } from "@/components/investment/comparison-card"
-import type { Message, Company, ComparisonData } from "@/types"
+import { MarketMoversCard } from "@/components/investment/market-movers-card"
+import { FinancialHealthCard } from "@/components/investment/financial-health-card"
+import { NewsCard } from "@/components/investment/news-card"
+import type { Message, Company, ComparisonData, MarketMoversData, FinancialHealthData, NewsData } from "@/types"
 
 interface ChatAreaProps {
   messages: Message[]
@@ -75,13 +78,22 @@ export function ChatArea({ messages, isLoading, onSendMessage }: ChatAreaProps) 
           <ChatBubble 
             key={message.id} 
             role={message.role} 
-            content={message.type === "company_card" || message.type === "comparison_card" ? undefined : message.content}
+            content={message.type === "company_card" || message.type === "comparison_card" || message.type === "market_movers_card" || message.type === "financial_health_card" || message.type === "news_card" ? undefined : message.content}
           >
             {message.type === "company_card" && message.data && (
               <CompanyCard {...(message.data as Company)} />
             )}
             {message.type === "comparison_card" && message.data && (
               <ComparisonCard {...(message.data as ComparisonData)} />
+            )}
+            {message.type === "market_movers_card" && message.data && (
+              <MarketMoversCard {...(message.data as MarketMoversData)} />
+            )}
+            {message.type === "financial_health_card" && message.data && (
+              <FinancialHealthCard {...(message.data as FinancialHealthData)} />
+            )}
+            {message.type === "news_card" && message.data && (
+              <NewsCard {...(message.data as NewsData)} />
             )}
           </ChatBubble>
         ))}

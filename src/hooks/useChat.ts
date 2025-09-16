@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react"
 import type { Message, ChatSession, ThreadType } from "@/types"
 import { MOCK_DATA, DEMO_STOCK_PRICES } from "@/constants"
+import { ChatProcessor } from "@/lib/services/chatProcessor"
 
 interface UseChatReturn {
   messages: Message[]
@@ -178,7 +179,7 @@ const parseTradeCommand = (content: string): PendingTrade | null => {
 }
 
 // Helper function to generate contextual AI responses
-const generateAIResponse = (userMessage: string, pendingTrade: PendingTrade | null): { messages: Message[], newPendingTrade: PendingTrade | null } => {
+const generateAIResponse = async (userMessage: string, pendingTrade: PendingTrade | null): Promise<{ messages: Message[], newPendingTrade: PendingTrade | null }> => {
   const lowerMessage = userMessage.toLowerCase()
   
   // Handle trade confirmation
@@ -216,7 +217,6 @@ const generateAIResponse = (userMessage: string, pendingTrade: PendingTrade | nu
   // Parse new trade command
   const tradeCommand = parseTradeCommand(userMessage)
   if (tradeCommand) {
-    const availableTickers = Object.keys(DEMO_STOCK_PRICES).join(', ')
     return {
       messages: [
         {
@@ -231,146 +231,82 @@ const generateAIResponse = (userMessage: string, pendingTrade: PendingTrade | nu
     }
   }
   
-  // Check for comparison requests first
-  const comparisonType = detectComparisonRequest(userMessage)
-  if (comparisonType === 'apple_vs_microsoft') {
-    return {
-      messages: [
-        {
-          id: Date.now().toString(),
-          role: "ai",
-          content: "Great question! Let me provide a comprehensive comparison of Apple vs Microsoft for you:",
-          type: "text",
-          timestamp: new Date()
-        },
-        {
-          id: (Date.now() + 1).toString(),
-          role: "ai",
-          type: "comparison_card",
-          data: MOCK_DATA.comparisons.appleVsMicrosoft,
-          timestamp: new Date()
-        }
-      ],
-      newPendingTrade: null
-    }
-  }
-  
-  // Apple company card request
-  if (detectAppleRequest(userMessage)) {
-    return {
-      messages: [
-        {
-          id: Date.now().toString(),
-          role: "ai",
-          content: "Here's my analysis of Apple (AAPL):",
-          type: "text",
-          timestamp: new Date()
-        },
-        {
-          id: (Date.now() + 1).toString(),
-          role: "ai",
-          type: "company_card",
-          data: MOCK_DATA.companies.apple,
-          timestamp: new Date()
-        }
-      ],
-      newPendingTrade: null
-    }
-  }
-  
-  // Portfolio-related requests
-  if (lowerMessage.includes('portfolio') || lowerMessage.includes('holdings')) {
-    return {
-      messages: [
-        {
-          id: Date.now().toString(),
-          role: "ai",
-          content: "You can see your portfolio summary on the right side of the screen. Your current portfolio is diversified across stocks, real estate, and land holdings with a total value of $45,000.",
-          type: "text",
-          timestamp: new Date()
-        }
-      ],
-      newPendingTrade: null
-    }
-  }
-  
-  // Trading help
-  if (lowerMessage.includes('trade') || lowerMessage.includes('stock') || lowerMessage.includes('shares')) {
-    const availableTickers = Object.keys(DEMO_STOCK_PRICES).join(', ')
-    return {
-      messages: [
-        {
-          id: Date.now().toString(),
-          role: "ai",
-          content: `📈 **Stock Trading Available**\n\nI can help you buy or sell stocks! Try commands like:\n• "buy 5 AAPL shares"\n• "sell 2 MSFT shares"\n• "purchase 10 AMZN shares"\n\n**Available stocks (demo prices):**\n${availableTickers}\n\n*Note: This is a demo using simulated prices. Your portfolio will update in real-time!*`,
-          type: "text",
-          timestamp: new Date()
-        }
-      ],
-      newPendingTrade: null
-    }
-  }
-  
-  // Investment advice requests
-  if (lowerMessage.includes('invest') || lowerMessage.includes('buy') || lowerMessage.includes('recommendation')) {
-    return {
-      messages: [
-        {
-          id: Date.now().toString(),
-          role: "ai",
-          content: "I'd be happy to help with investment advice! To give you personalized recommendations, I'd need to understand your risk tolerance and investment goals better. Have you completed your risk assessment yet?\n\nOr if you want to trade stocks directly, try: 'buy 5 AAPL shares'",
-          type: "text",
-          timestamp: new Date()
-        }
-      ],
-      newPendingTrade: null
-    }
-  }
-  
-  // Risk assessment requests
-  if (lowerMessage.includes('risk') || lowerMessage.includes('assessment')) {
-    return {
-      messages: [
-        {
-          id: Date.now().toString(),
-          role: "ai",
-          content: "A risk assessment helps me understand your investment personality and recommend suitable strategies. Would you like to start your risk assessment now?",
-          type: "text",
-          timestamp: new Date()
-        }
-      ],
-      newPendingTrade: null
-    }
-  }
-  
-  // Greeting responses
-  if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-    return {
-      messages: [
-        {
-          id: Date.now().toString(),
-          role: "ai",
-          content: "Hello! I'm your AI investment assistant. I can help you analyze companies, manage your portfolio, and execute trades. What would you like to explore today?",
-          type: "text",
-          timestamp: new Date()
-        }
-      ],
-      newPendingTrade: null
-    }
-  }
-  
-  // Default response
-  return {
-    messages: [
-      {
+  // Use the ChatProcessor for all other queries
+  try {
+    const result = await ChatProcessor.processUserMessage(userMessage)
+    
+    const messages: Message[] = []
+    
+    if (result.responseType === "text" && result.textResponse) {
+      messages.push({
         id: Date.now().toString(),
         role: "ai",
-        content: "I understand you're asking about that! I can help you with:\n• Company analysis (try 'Apple')\n• Stock comparisons (try 'Apple vs Microsoft')\n• Stock trading (try 'buy 5 AAPL shares')\n• Portfolio reviews (try 'portfolio')\n\nWhat would you like to explore?",
+        content: result.textResponse,
         type: "text",
         timestamp: new Date()
+      })
+    } else if (result.responseType !== "text" && result.data) {
+      // Add a contextual message before the card
+      let contextualMessage = ""
+      switch (result.responseType) {
+        case "company_card":
+          contextualMessage = `Here's my analysis of ${result.data.name} (${result.data.ticker}):`
+          break
+        case "comparison_card":
+          contextualMessage = "Great question! Let me provide a comprehensive comparison for you:"
+          break
+        case "market_movers_card":
+          contextualMessage = "Here are today's market movers with unusual trading activity:"
+          break
+        case "financial_health_card":
+          contextualMessage = `Here's the financial health analysis for ${result.data.name} (${result.data.ticker}):`
+          break
+        case "news_card":
+          contextualMessage = `Here are the latest headlines for ${result.data.name} (${result.data.ticker}):`
+          break
+        default:
+          contextualMessage = "Here's what I found:"
       }
-    ],
-    newPendingTrade: null
+      
+      if (contextualMessage) {
+        messages.push({
+          id: Date.now().toString(),
+          role: "ai",
+          content: contextualMessage,
+          type: "text",
+          timestamp: new Date()
+        })
+      }
+      
+      messages.push({
+        id: (Date.now() + 1).toString(),
+        role: "ai",
+        type: result.responseType,
+        data: result.data,
+        timestamp: new Date()
+      })
+    }
+    
+    return {
+      messages,
+      newPendingTrade: null
+    }
+  } catch (error) {
+    console.error("Error processing message with ChatProcessor:", error)
+    
+    // Fallback to default response
+    return {
+      messages: [
+        {
+          id: Date.now().toString(),
+          role: "ai",
+          content: "I understand you're asking about financial information. Let me help you with that. Could you please be more specific about what you'd like to know?",
+          type: "text",
+          timestamp: new Date()
+        }
+      ],
+      newPendingTrade: null
+    }
   }
 }
 
@@ -435,7 +371,7 @@ export function useChat(userId?: string, onTradeExecuted?: (trade: PendingTrade)
         setMessages(prev => [...prev, {
           id: `demo-tip-${Date.now()}`,
           role: "ai",
-          content: "💡 **Demo Tips**: Try 'Apple' for analysis, 'Apple vs Microsoft' for comparison, or 'buy 5 AAPL shares' for trading!",
+          content: "💡 **Enhanced Chat Features**: Try these queries to see the new card types:\n\n• **Stock Analysis**: 'What's the price of AAPL?'\n• **Company Info**: 'Tell me about Microsoft'\n• **News**: 'Latest news for Tesla'\n• **Comparisons**: 'Compare AAPL vs MSFT'\n• **Market Movers**: 'Show me high volume stocks'\n• **Financial Health**: 'Financial health of NVIDIA'\n• **Education**: 'What are dividends?'\n\nType any of these to see the enhanced card responses!",
           type: "text",
           timestamp: new Date()
         }])
@@ -498,7 +434,7 @@ export function useChat(userId?: string, onTradeExecuted?: (trade: PendingTrade)
       // Simulate a brief delay for more realistic feel
       await new Promise(resolve => setTimeout(resolve, 800))
       
-      const { messages: aiResponses, newPendingTrade } = generateAIResponse(content, pendingTrade)
+      const { messages: aiResponses, newPendingTrade } = await generateAIResponse(content, pendingTrade)
       
       // If trade was confirmed, execute it
       if (pendingTrade && !newPendingTrade && (content.toLowerCase().includes('yes') || content.toLowerCase().includes('confirm'))) {
