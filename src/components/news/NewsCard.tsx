@@ -5,15 +5,16 @@ import type { CompanyNewsArticle } from '@/lib/services';
 interface NewsCardProps {
   article: CompanyNewsArticle;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export function FinnhubNewsCard({ article, className = '' }: NewsCardProps) {
+export function FinnhubNewsCard({ article, className = '', style }: NewsCardProps) {
   const formattedDate = formatNewsDate(article.datetime);
   const truncatedSummary = truncateText(article.summary, 250);
   const relatedTickers = parseRelatedTickers(article.related);
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 ${className}`}>
+    <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 ${className}`} style={style}>
       {/* Header */}
       <div className="p-4 pb-3">
         <h3 className="text-lg font-bold text-gray-900 leading-tight mb-2">
@@ -81,13 +82,13 @@ export function FinnhubNewsCard({ article, className = '' }: NewsCardProps) {
 }
 
 // Compact variant for smaller spaces
-export function FinnhubNewsCardCompact({ article, className = '' }: NewsCardProps) {
+export function FinnhubNewsCardCompact({ article, className = '', style }: NewsCardProps) {
   const formattedDate = formatNewsDate(article.datetime);
   const truncatedSummary = truncateText(article.summary, 150);
   const relatedTickers = parseRelatedTickers(article.related);
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 ${className}`}>
+    <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 ${className}`} style={style}>
       <div className="p-3">
         <h3 className="text-base font-bold text-gray-900 leading-tight mb-2 line-clamp-2">
           {article.headline}
